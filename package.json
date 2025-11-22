@@ -1,7 +1,6 @@
 {
-  "name": "sympjs",
-  "private": true,
-  "version": "0.0.0",
+  "name": "@auriel/sympjs",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,5 +10,21 @@
   "devDependencies": {
     "typescript": "~5.9.3",
     "vite": "^7.2.4"
-  }
+  },
+  "description": "A TypeScript library for symbolic mathematics inspired by SymPy, providing symbolic computation, automatic differentiation, and beautiful mathematical rendering.",
+  "main": "src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uriel-flame-of-god/SympJS.git"
+  },
+  "keywords": [
+    "Typescript",
+    "Mathematics"
+  ],
+  "author": "Debaditya Malakar",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/uriel-flame-of-god/SympJS/issues"
+  },
+  "homepage": "https://github.com/uriel-flame-of-god/SympJS#readme"
 }
