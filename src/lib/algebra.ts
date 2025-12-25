@@ -10,17 +10,20 @@ class Simplifier {
     /**
      * Simplify a symbolic expression with maximum iterations
      */
-    static simplify(expr: Symbols, maxIterations: number = 10): Symbols {
+    static simplify(expr: Symbols, maxIterations: number = 15): Symbols {
         let current = expr;
         let iterations = 0;
+        let prevString = '';
 
         while (iterations < maxIterations) {
             const simplified = this.applyAllRules(current);
+            const currentString = simplified.toString();
             
-            if (simplified.toString() === current.toString()) {
+            if (currentString === prevString) {
                 break;
             }
             
+            prevString = currentString;
             current = simplified;
             iterations++;
         }
@@ -70,6 +73,13 @@ class Simplifier {
         // x + x = 2x
         if (a.toString() === b.toString()) {
             return new SymbolicExpression([new Constant(2), a], '*');
+        }
+
+        // Flatten nested additions: ((a + b) + c) -> (a + (b + c))
+        if (a instanceof SymbolicExpression && a.operation === '+') {
+            const [a1, a2] = a.args;
+            const flattened = new SymbolicExpression([a2, b], '+');
+            return new SymbolicExpression([a1, flattened], '+');
         }
 
         // a + b where both are constants
@@ -127,6 +137,15 @@ class Simplifier {
         // Commutativity: move constants to front for canonical form
         if (b instanceof Constant && !(a instanceof Constant)) {
             return new SymbolicExpression([b, a], '*');
+        }
+
+        // Combine constant multiplications: (c1 * x) * c2 = (c1 * c2) * x
+        if (a instanceof SymbolicExpression && a.operation === '*' && b instanceof Constant) {
+            const [a1, a2] = a.args;
+            if (a1 instanceof Constant) {
+                const combined = parseFloat(a1.name) * parseFloat(b.name);
+                return new SymbolicExpression([new Constant(combined), a2], '*');
+            }
         }
 
         return new SymbolicExpression(args, '*');

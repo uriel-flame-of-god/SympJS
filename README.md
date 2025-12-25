@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@auriel/sympjs.svg)](https://www.npmjs.com/package/@auriel/sympjs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive TypeScript library for symbolic mathematics inspired by SymPy, providing symbolic computation, automatic differentiation, algebraic simplification, equation solving, and beautiful mathematical rendering.
+A comprehensive TypeScript library for symbolic mathematics inspired by SymPy, providing symbolic computation, automatic differentiation, algebraic simplification, equation solving, Fourier series, trigonometric functions, integration, and beautiful mathematical rendering.
 
 ## 🚀 Features
 
@@ -34,6 +34,44 @@ A comprehensive TypeScript library for symbolic mathematics inspired by SymPy, p
   - Transpose, Determinant, Matrix Inverse
   - Gaussian elimination for solving linear systems
   - LU decomposition for efficiency
+
+### Complex Numbers & Series
+- **Complex Number Support**: Full complex arithmetic with imaginary unit `i`
+  - Complex addition, subtraction, multiplication, division
+  - Magnitude and phase calculations
+  - Complex conjugation
+  - Built-in constants: `i`, `0`, `1`
+
+- **Taylor Series Expansion**: Symbolic Taylor series for functions
+  - Expand functions around any point
+  - Configurable number of terms
+  - Built-in expansions for common functions (`e^x`, `sin(x)`, `cos(x)`)
+  - Custom function expansion support
+
+- **Fourier Series Expansion**: Complete Fourier analysis capabilities
+  - Real and complex Fourier series
+  - Common waveforms: square wave, sawtooth wave, triangle wave
+  - Custom function Fourier series computation
+  - Amplitude and phase spectrum analysis
+  - Numerical integration using Simpson's rule
+  - Conversion between real and complex representations
+
+### Calculus Operations
+- **Symbolic Integration**: Basic integration capabilities
+  - Power rule integration
+  - Linearity of integration
+  - Constant multiple rule
+  - Integration by parts (basic)
+  - Definite integrals with bounds
+  - Support for integral notation
+
+- **Trigonometric Functions**: Complete trigonometric system
+  - All six trigonometric functions: `sin`, `cos`, `tan`, `cot`, `sec`, `csc`
+  - Inverse trigonometric functions: `asin`, `acos`, `atan`
+  - Symbolic differentiation of trigonometric functions
+  - Common angle simplification (30°, 45°, 60°, 90°)
+  - Trigonometric identities and simplification
+  - Chain rule support for composite trigonometric functions
 
 ### Rendering & Visualization
 - **Beautiful Mathematical Typography**: Professional rendering with proper spacing and symbols
@@ -164,6 +202,111 @@ diff(x.mul(y), x);                   // y (product rule)
 diff(x.div(y), x);                   // 1/y (quotient rule)
 ```
 
+### Integration
+
+```typescript
+import { int, symbols, Constant } from '@auriel/sympjs';
+
+const [x] = symbols('x');
+const zero = new Constant(0);
+const one = new Constant(1);
+
+// Basic integration
+int(new Constant(1), x);            // ∫1 dx = x
+int(x, x);                          // ∫x dx = (1/2)x²
+int(x.pow(2), x);                   // ∫x² dx = (1/3)x³
+
+// Definite integrals
+int(x.pow(2), x, zero, one);        // ∫[0,1] x² dx
+
+// Linearity of integration
+const linearExpr = x.add(x.pow(2));
+int(linearExpr, x);                 // ∫(x + x²) dx = (1/2)x² + (1/3)x³
+
+// Constant multiple rule
+const constMultipleExpr = new Constant(3).mul(x.pow(2));
+int(constMultipleExpr, x);          // ∫3x² dx = x³
+```
+
+### Trigonometric Functions
+
+```typescript
+import { sin, cos, tan, cot, sec, csc, asin, acos, atan, simplifyTrig, pi, symbols } from '@auriel/sympjs';
+
+const [x] = symbols('x');
+
+// Basic trigonometric functions
+const sinExpr = sin(x);
+const cosExpr = cos(x);
+const tanExpr = tan(x);
+const cotExpr = cot(x);
+const secExpr = sec(x);
+const cscExpr = csc(x);
+
+// Inverse trigonometric functions
+const asinExpr = asin(x);
+const acosExpr = acos(x);
+const atanExpr = atan(x);
+
+// Common angle simplification
+const sin30 = simplifyTrig(sin(pi().div(6)));    // sin(π/6) → 1/2
+const cos45 = simplifyTrig(cos(pi().div(4)));    // cos(π/4) → √2/2
+const tan60 = simplifyTrig(tan(pi().div(3)));    // tan(π/3) → √3
+
+// Trigonometric identities
+const pythagorean = sin(x).pow(2).add(cos(x).pow(2));
+const simplified = simplifyTrig(pythagorean);    // sin²(x) + cos²(x) → 1
+
+// Derivatives of trig functions
+sinExpr.diff(x);     // cos(x)
+cosExpr.diff(x);     // -sin(x)
+tanExpr.diff(x);     // sec²(x)
+asinExpr.diff(x);    // 1/√(1 - x²)
+
+// Chain rule examples
+sin(x.mul(2)).diff(x);      // 2cos(2x)
+cos(x.pow(2)).diff(x);      // -2x sin(x²)
+```
+
+### Fourier Series
+
+```typescript
+import { FourierSeries, FourierUtils } from '@auriel/sympjs';
+
+// Common waveforms
+const squareWave = FourierUtils.squareWave(1, 2 * Math.PI);
+const sawtoothWave = FourierUtils.sawtoothWave(1, 2 * Math.PI);
+const triangleWave = FourierUtils.triangleWave(1, 2 * Math.PI);
+
+// Evaluate waveforms
+squareWave.evaluate(0);           // Value at x=0
+squareWave.evaluate(Math.PI/4);   // Value at x=π/4
+
+// Get coefficients
+const coeffs = squareWave.getCoefficients();
+console.log(`a0 = ${coeffs.a0}`);
+console.log(`First an: ${coeffs.an.slice(0, 3)}`);
+console.log(`First bn: ${coeffs.bn.slice(0, 3)}`);
+
+// Create custom Fourier series
+const customSeries = new FourierSeries(2 * Math.PI);
+const customFunc = (x: number) => Math.abs(x);  // f(x) = |x|
+customSeries.computeCoefficients(customFunc, 5, 1000); // 5 harmonics
+
+// Complex Fourier series
+const complexSeries = new FourierSeries(2 * Math.PI);
+const complexFunc = (x: number) => new Complex(Math.cos(x), Math.sin(x)); // e^(ix)
+complexSeries.computeComplexCoefficients(complexFunc, 3, 500);
+
+// Get amplitude and phase spectrum
+const amplitude = complexSeries.getAmplitudeSpectrum();
+const phase = complexSeries.getPhaseSpectrum();
+
+// Convert real to complex coefficients
+const complexCoeffs = squareWave.toComplexCoefficients();
+const complexFromReal = FourierSeries.fromComplexCoefficients(complexCoeffs, 2 * Math.PI);
+```
+
 ### Algebraic Simplification
 
 ```typescript
@@ -248,6 +391,57 @@ const augmented = new Matrix([
 const solution = augmented.gaussianElimination();  // [x, y]
 ```
 
+### Complex Numbers
+
+```typescript
+import { Complex } from '@auriel/sympjs';
+
+// Create complex numbers
+const z1 = new Complex(3, 4);        // 3 + 4i
+const z2 = new Complex(1, -2);       // 1 - 2i
+
+// Basic arithmetic
+const sum = z1.add(z2);              // 4 + 2i
+const product = z1.multiply(z2);     // 11 - 2i
+const quotient = z1.divide(z2);      // -1 + 2i
+
+// Properties and functions
+const magnitude = z1.magnitude();    // 5.0000
+const phase = z1.phase();            // 0.9273 radians
+const conjugate = z1.conjugate();    // 3 - 4i
+
+// Built-in constants
+const i = ComplexConstants.I;                 // 0 + 1i
+const zero = ComplexConstants.ZERO;           // 0 + 0i
+const one = ComplexConstants.ONE;             // 1 + 0i
+
+// String representation
+console.log(z1.toString());          // "3 + 4i"
+```
+
+### Taylor Series
+
+```typescript
+import { TaylorSeries, symbols } from '@auriel/sympjs';
+
+const [x] = symbols('x');
+
+// Taylor series for common functions
+const expSeries = TaylorSeries.exp(x, 0, 6);     // e^x around 0, 6 terms
+const sinSeries = TaylorSeries.sin(x, 0, 6);     // sin(x) around 0, 6 terms
+const cosSeries = TaylorSeries.cos(x, 0, 6);     // cos(x) around 0, 6 terms
+
+// Custom function expansion
+const customFunc = x.pow(2).add(x.mul(3)).add(1);
+const customSeries = TaylorSeries.expand(customFunc, x, 0, 3);
+
+// Display results
+console.log(`e^x ≈ ${expSeries}`);
+console.log(`sin(x) ≈ ${sinSeries}`);
+console.log(`cos(x) ≈ ${cosSeries}`);
+console.log(`Custom function: ${customSeries}`);
+```
+
 ### Rendering
 
 ```typescript
@@ -282,6 +476,7 @@ renderer.clearAll();
 - **Operators**: `∫` (integral), `∑` (summation), `∂` (partial), `∇` (nabla), `√` (root), `∞` (infinity), `±`, `×`, `÷`
 - **Relations**: `≤, ≥, ≠, ≈, ∝`
 - **Primes**: `′, ″`
+- **Complex numbers**: `i` (imaginary unit)
 
 ### Beautiful Formatting
 - **Superscripts**: `x^2` → x², `x^{n+1}` → xⁿ⁺¹
@@ -297,7 +492,7 @@ renderer.clearAll();
 ### Calculus Examples
 
 ```typescript
-import { symbols, diff, Simplifier, Render } from '@auriel/sympjs';
+import { symbols, diff, int, Simplifier, Render } from '@auriel/sympjs';
 
 const [x, y] = symbols('x', 'y');
 const renderer = new Render();
@@ -317,13 +512,85 @@ const quotientExpr = x.div(x.add(1));
 const quotientDeriv = diff(quotientExpr, x);
 renderer.renderSymbolic(quotientDeriv, 'quotient-rule');
 
-// Complex expression
-const complex = x.pow(3)
-  .add(y.pow(2))
-  .mul(x.sub(y));
-const complexDeriv = diff(complex, x);
-const simplified = Simplifier.simplify(complexDeriv);
-renderer.renderSymbolic(simplified, 'complex-deriv');
+// Integration examples
+const integral1 = int(x.pow(3), x);  // (1/4)x⁴
+const integral2 = int(sin(x), x);    // -cos(x)
+renderer.renderSymbolic(integral1, 'integral-1');
+renderer.renderSymbolic(integral2, 'integral-2');
+```
+
+### Fourier Series Examples
+
+```typescript
+import { FourierSeries, FourierUtils, Render } from '@auriel/sympjs';
+
+const renderer = new Render();
+
+// Square wave analysis
+const squareWave = FourierUtils.squareWave(1, 2 * Math.PI);
+console.log(`Square wave has ${squareWave.getNumHarmonics()} harmonics`);
+console.log(`Period: ${squareWave.getPeriod()}`);
+
+// Evaluate at different points
+const points = [0, Math.PI/4, Math.PI/2, Math.PI];
+points.forEach(x => {
+    const value = squareWave.evaluate(x);
+    console.log(`f(${x.toFixed(2)}) = ${value.toFixed(4)}`);
+});
+
+// Custom function Fourier series
+const customSeries = new FourierSeries(Math.PI);
+const triangleFunc = (x: number) => Math.abs(x);  // Triangle wave
+customSeries.computeCoefficients(triangleFunc, 5, 1000);
+
+// Complex Fourier series
+const complexSeries = new FourierSeries(2 * Math.PI);
+const complexFunc = (x: number) => new Complex(Math.cos(x), Math.sin(x));
+complexSeries.computeComplexCoefficients(complexFunc, 3, 500);
+
+// Get frequency spectrum
+const amplitudes = complexSeries.getAmplitudeSpectrum();
+const phases = complexSeries.getPhaseSpectrum();
+console.log('Amplitude spectrum:', amplitudes.map(a => a.toFixed(4)));
+```
+
+### Trigonometric Examples
+
+```typescript
+import { symbols, sin, cos, tan, simplifyTrig, pi, diff, Render } from '@auriel/sympjs';
+
+const [x] = symbols('x');
+const renderer = new Render();
+
+// Common angle simplification
+const angles = {
+    'π/6': pi().div(6),
+    'π/4': pi().div(4), 
+    'π/3': pi().div(3),
+    'π/2': pi().div(2)
+};
+
+Object.entries(angles).forEach(([name, angle]) => {
+    const sinVal = simplifyTrig(sin(angle));
+    const cosVal = simplifyTrig(cos(angle));
+    const tanVal = simplifyTrig(tan(angle));
+    
+    console.log(`${name}: sin = ${sinVal}, cos = ${cosVal}, tan = ${tanVal}`);
+    renderer.renderSymbolic(sinVal, `sin-${name}`);
+    renderer.renderSymbolic(cosVal, `cos-${name}`);
+    renderer.renderSymbolic(tanVal, `tan-${name}`);
+});
+
+// Trigonometric differentiation chain rule
+const compositeFunc = sin(x.pow(2).add(1));
+const derivative = compositeFunc.diff(x);
+console.log(`d/dx[sin(x² + 1)] = ${derivative}`);
+renderer.renderSymbolic(derivative, 'trig-derivative');
+
+// Trigonometric identities
+const identity1 = sin(x).pow(2).add(cos(x).pow(2));
+const simplifiedId = simplifyTrig(identity1);
+console.log(`sin²(x) + cos²(x) = ${simplifiedId}`);
 ```
 
 ### Linear Algebra Examples
@@ -355,15 +622,63 @@ console.log(`Inverse:`, A.inverse());
 console.log(`Transpose:`, A.transpose());
 ```
 
-### Educational Tool
+### Complex Number & Taylor Series Examples
 
 ```typescript
-import { symbols, diff, Simplifier, Render } from '@auriel/sympjs';
+import { Complex, TaylorSeries, symbols, Render } from '@auriel/sympjs';
 
 const [x] = symbols('x');
 const renderer = new Render();
 
-// Demonstrate differentiation rules
+// Complex number operations
+const z1 = new Complex(3, 4);
+const z2 = new Complex(1, -2);
+
+console.log(`z1 = ${z1}`);
+console.log(`z2 = ${z2}`);
+console.log(`Magnitude of z1: ${z1.magnitude().toFixed(4)}`);
+console.log(`Phase of z1: ${z1.phase().toFixed(4)} radians`);
+
+const zSum = z1.add(z2);
+console.log(`\nz1 + z2 = ${zSum}`);
+
+const zProduct = z1.multiply(z2);
+console.log(`z1 * z2 = ${zProduct}`);
+
+const zQuotient = z1.divide(z2);
+console.log(`z1 / z2 = ${zQuotient}`);
+
+const zConjugate = z1.conjugate();
+console.log(`Conjugate of z1: ${zConjugate}`);
+
+console.log(`\nComplex constants:`);
+console.log(`i = ${ComplexConstants.I}`);
+console.log(`0 = ${ComplexConstants.ZERO}`);
+console.log(`1 = ${ComplexConstants.ONE}`);
+
+// Taylor series expansions
+const expApprox = TaylorSeries.exp(x, 0, 6);
+const sinApprox = TaylorSeries.sin(x, 0, 6);
+const cosApprox = TaylorSeries.cos(x, 0, 6);
+
+renderer.renderSymbolic(expApprox, 'taylor-exp');
+renderer.renderSymbolic(sinApprox, 'taylor-sin');
+renderer.renderSymbolic(cosApprox, 'taylor-cos');
+
+console.log(`\ne^x ≈ ${expApprox}`);
+console.log(`sin(x) ≈ ${sinApprox}`);
+console.log(`cos(x) ≈ ${cosApprox}`);
+```
+
+### Educational Tool
+
+```typescript
+import { symbols, diff, int, Simplifier, Render, TaylorSeries, FourierUtils } from '@auriel/sympjs';
+
+const [x] = symbols('x');
+const renderer = new Render();
+
+// Demonstrate calculus rules
 const functions = [
   { name: 'Power', expr: x.pow(2) },
   { name: 'Product', expr: x.mul(x.add(1)) },
@@ -373,9 +688,36 @@ const functions = [
 
 functions.forEach((fn, i) => {
   const derivative = Simplifier.simplify(diff(fn.expr, x));
+  const integral = int(fn.expr, x);
+  const taylor = TaylorSeries.expand(fn.expr, x, 0, 4);
+  
   renderer.renderSymbolic(fn.expr, `func-${i}`);
   renderer.renderSymbolic(derivative, `deriv-${i}`);
-  console.log(`${fn.name}: ${fn.expr} → ${derivative}`);
+  renderer.renderSymbolic(integral, `integral-${i}`);
+  renderer.renderSymbolic(taylor, `taylor-${i}`);
+  
+  console.log(`${fn.name}: ${fn.expr} → d/dx: ${derivative}, ∫: ${integral}`);
+});
+
+// Fourier analysis demo
+const squareWave = FourierUtils.squareWave(1, 2 * Math.PI);
+const triangleWave = FourierUtils.triangleWave(1, 2 * Math.PI);
+const sawtoothWave = FourierUtils.sawtoothWave(1, 2 * Math.PI);
+
+const waveforms = [
+  { name: 'Square Wave', wave: squareWave },
+  { name: 'Triangle Wave', wave: triangleWave },
+  { name: 'Sawtooth Wave', wave: sawtoothWave }
+];
+
+waveforms.forEach((wf, i) => {
+  console.log(`${wf.name}:`);
+  console.log(`  Harmonics: ${wf.wave.getNumHarmonics()}`);
+  console.log(`  Period: ${wf.wave.getPeriod()}`);
+  
+  const testPoint = Math.PI / 2;
+  const value = wf.wave.evaluate(testPoint);
+  console.log(`  f(π/2) = ${value.toFixed(4)}`);
 });
 ```
 
@@ -385,9 +727,13 @@ functions.forEach((fn, i) => {
 ```
 src/
 ├── types/
-│   └── symbols.ts           # Core symbol classes & differentiation
+│   ├── symbols.ts           # Core symbol classes & differentiation
+│   ├── complex.ts           # Complex number implementation
+│   └── trigonometry.ts      # Trigonometric functions and identities
 ├── lib/
 │   ├── algebra.ts           # Simplification, equations, matrices
+│   ├── taylor.ts            # Taylor series expansion
+│   ├── fourier.ts           # Fourier series expansion
 │   └── render.ts            # Beautiful math renderer
 ├── index.ts                 # Main exports
 └── main.ts                  # Usage examples
@@ -405,8 +751,12 @@ npm run test     # Run tests
 ```
 
 ### Directory Overview
-- `src/types/symbols.ts` - Symbolic computation engine with differentiation rules
+- `src/types/symbols.ts` - Symbolic computation engine with differentiation and integration rules
+- `src/types/complex.ts` - Complex number arithmetic and operations
+- `src/types/trigonometry.ts` - Trigonometric functions, identities, and simplification
 - `src/lib/algebra.ts` - Advanced algebra: simplification, equation solving, linear algebra
+- `src/lib/taylor.ts` - Taylor series expansion for functions
+- `src/lib/fourier.ts` - Fourier series analysis and synthesis
 - `src/lib/render.ts` - Mathematical expression rendering with beautiful typography
 - `index.html` - Demo page with math containers
 - `src/main.ts` - Comprehensive test suite demonstrating all features
@@ -438,6 +788,43 @@ npm run test     # Run tests
 - Matrix inverse with identity verification
 - Gaussian elimination for system solving (2x2, 3x3)
 
+### Complex Numbers ✓
+- Complex arithmetic (addition, subtraction, multiplication, division)
+- Magnitude and phase calculations
+- Complex conjugation
+- Built-in constants (i, 0, 1)
+- String representation
+
+### Taylor Series ✓
+- Exponential function expansion (e^x)
+- Trigonometric function expansion (sin(x), cos(x))
+- Custom function expansion
+- Configurable expansion point and number of terms
+- Symbolic polynomial generation
+
+### Fourier Series ✓
+- Real Fourier series computation
+- Complex Fourier series computation
+- Common waveform generation (square, sawtooth, triangle)
+- Numerical integration with Simpson's rule
+- Amplitude and phase spectrum analysis
+- Real-to-complex coefficient conversion
+
+### Trigonometric Functions ✓
+- All six trigonometric functions (sin, cos, tan, cot, sec, csc)
+- Inverse trigonometric functions (asin, acos, atan)
+- Common angle simplification (30°, 45°, 60°, 90°)
+- Symbolic differentiation with chain rule
+- Trigonometric identity application
+- Exact value computation for special angles
+
+### Integration ✓
+- Basic power rule integration
+- Linearity and constant multiple rules
+- Definite integrals with bounds
+- Integration by parts (basic)
+- Integral expression representation
+
 ### Rendering ✓
 - Auto-container detection with `app-type="math"`
 - Symbolic expression rendering
@@ -450,14 +837,17 @@ npm run test     # Run tests
 - [x] Algebraic simplification engine
 - [x] Equation solving system
 - [x] Matrix operations and linear algebra
-- [ ] Symbolic integration capabilities
+- [x] Complex number support
+- [x] Series expansion (Taylor)
+- [x] Symbolic integration capabilities
 - [ ] LaTeX import/export
 - [ ] Limit computation
-- [ ] Series expansion (Taylor, Fourier)
-- [ ] Complex number support
+- [x] Fourier series expansion
 - [ ] 3D mathematical plotting
 - [ ] Polynomial factorization
-- [ ] Trigonometric simplification
+- [x] Trigonometric simplification
+- [ ] Graph theory integration
+- [ ] Statistics and probability functions
 
 ## 🤝 Contributing
 

@@ -79,8 +79,21 @@ class Symbols {
  * Represents a numeric constant
  */
 class Constant extends Symbols {
+    private _value: number;
+    
     constructor(value: number) {
         super(value.toString());
+        this._value = value;
+    }
+    
+    /** Override valueOf to return numeric value for constants */
+    valueOf(): number {
+        return this._value;
+    }
+    
+    /** Get the numeric value */
+    getValue(): number {
+        return this._value;
     }
 }
 
@@ -207,6 +220,7 @@ function differentiate(expr: Symbols, variable: Symbols): Symbols {
     
     throw new Error(`Cannot differentiate expression: ${expr}`);
 }
+
 /**
  * Create symbolic variables
  * @param names Variable names
@@ -219,4 +233,117 @@ function symbols(...names: string[]): Symbols[] {
 // Alias for backward compatibility
 const diff = differentiate;
 
-export { symbols, Symbols, differentiate, diff, Constant, SymbolicExpression };
+/**
+ * Represents an integral expression
+ */
+class Integral extends SymbolicExpression {
+    constructor(
+        readonly integrand: Symbols,
+        readonly variable: Symbols,
+        readonly lowerBound: Symbols | null = null,
+        readonly upperBound: Symbols | null = null
+    ) {
+        super([integrand, variable], 'integrate');
+    }
+
+    toString(): string {
+        if (this.lowerBound !== null && this.upperBound !== null) {
+            return `∫[${this.lowerBound} to ${this.upperBound}] (${this.integrand}) d${this.variable}`;
+        }
+        return `∫(${this.integrand}) d${this.variable}`;
+    }
+}
+
+/**
+ * Integrate a symbolic expression with respect to a variable
+ * @param expr The expression to integrate
+ * @param variable The variable to integrate with respect to
+ * @param lower Optional lower bound for definite integral
+ * @param upper Optional upper bound for definite integral
+ * @returns Integrated expression or Integral if no closed form exists
+ */
+function integrate(
+    expr: Symbols,
+    variable: Symbols,
+    lower: Symbols | null = null,
+    upper: Symbols | null = null
+): Symbols {
+    // If both bounds are provided, it's a definite integral
+    if (lower !== null && upper !== null) {
+        // For now, we'll just return the integral with bounds
+        // as we don't have a substitution method yet
+        return new Integral(expr, variable, lower, upper);
+    }
+
+    // Basic integration rules
+    if (expr instanceof Constant) {
+        // ∫c dx = c*x
+        return new SymbolicExpression([expr, variable], '*');
+    }
+    
+    if (expr instanceof Symbols && expr.name === variable.name) {
+        // ∫x dx = (1/2)x^2
+        return new SymbolicExpression([
+            new Constant(0.5),
+            new SymbolicExpression([variable, new Constant(2)], '^')
+        ], '*');
+    }
+    
+    if (expr instanceof SymbolicExpression) {
+        const { operation, args } = expr;
+        
+        // Linearity of integration
+        if (operation === '+') {
+            return new SymbolicExpression(
+                args.map(term => integrate(term, variable)),
+                '+'
+            );
+        }
+        
+        // Constant multiple rule
+        if (operation === '*' && args.length === 2) {
+            const [a, b] = args;
+            if (a instanceof Constant) {
+                return new SymbolicExpression([a, integrate(b, variable)], '*');
+            }
+            if (b instanceof Constant) {
+                return new SymbolicExpression([b, integrate(a, variable)], '*');
+            }
+        }
+        
+        // Power rule: ∫x^n dx = x^(n+1)/(n+1) + C
+        if (operation === '^' && args[0] instanceof Symbols && 
+            args[0].name === variable.name && 
+            args[1] instanceof Constant) {
+            const n = (args[1] as Constant).valueOf();
+            if (n !== -1) {  // Handle 1/x separately
+                return new SymbolicExpression([
+                    new SymbolicExpression([variable, new Constant(n + 1)], '^'),
+                    new Constant(1 / (n + 1))
+                ], '*');
+            }
+        }
+        
+        // Integration by parts: ∫u dv = uv - ∫v du
+        // This is a simple implementation and may not always work
+        if (operation === '*') {
+            const u = args[0];
+            const dv = args[1];
+            const v = integrate(dv, variable);
+            const du = differentiate(u, variable);
+            const vdu = integrate(new SymbolicExpression([v, du], '*'), variable);
+            return new SymbolicExpression([
+                new SymbolicExpression([u, v], '*'),
+                vdu
+            ], '-');
+        }
+    }
+    
+    // If no rule applies, return an integral expression
+    return new Integral(expr, variable, lower, upper);
+}
+
+// Alias for backward compatibility
+const int = integrate;
+
+export { symbols, Symbols, differentiate, diff, Constant, SymbolicExpression, integrate, int, Integral };
